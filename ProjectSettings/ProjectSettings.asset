@@ -12,7 +12,7 @@ PlayerSettings:
   targetDevice: 2
   useOnDemandResources: 0
   accelerometerFrequency: 60
-  companyName: DefaultCompany
+  companyName: fishcat233
   productName: ThreeDimensionSandbox
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
@@ -918,7 +918,7 @@ PlayerSettings:
   hmiLogStartupTiming: 0
   hmiCpuConfiguration: 
   apiCompatibilityLevel: 6
-  activeInputHandler: 0
+  activeInputHandler: 2
   windowsGamepadBackendHint: 0
   cloudProjectId: 414792bd-01cb-48f8-bade-c536d0b4f50c
   framebufferDepthMemorylessMode: 0
