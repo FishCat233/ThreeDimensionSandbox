@@ -1,5 +1,6 @@
 using TDS.Camera;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace TDS
 {
@@ -49,10 +50,10 @@ namespace TDS
         [Tooltip("重力加速度，越大下落越快、跳跃越干脆")]
         [SerializeField, Min(0f)] float gravity = 20f;
 
-        // 着地时压向地面的速度。数值只需让地面检测稳定，不参与实际下落。
         [Header("进阶")]
         [Tooltip("黏着地面的速度。通常和下坡、平台边缘有关")]
-        [SerializeField, Min(0.01f)] float GroundStickSpeed = 2f;
+        [FormerlySerializedAs("GroundStickSpeed")]
+        [SerializeField, Min(0.01f)] float groundStickSpeed = 2f;
 
         CharacterController controller;
         float verticalVelocity;
@@ -63,11 +64,6 @@ namespace TDS
         void Awake()
         {
             controller = GetComponent<CharacterController>();
-            if (controller == null)
-            {
-                Debug.LogWarning("PlayerController 缺少 CharacterController，已自动添加。为避免此 warning，请在场景中添加 CharacterController", this);
-                controller = gameObject.AddComponent<CharacterController>();
-            }
 
             if (sphereCamera == null)
                 sphereCamera = FindFirstObjectByType<SphereCameraController>();
@@ -113,12 +109,10 @@ namespace TDS
 
         void HandleMoveInput()
         {
-            if (controller == null) return;
-
             bool grounded = controller.isGrounded;
 
             if (grounded && verticalVelocity < 0f)
-                verticalVelocity = -GroundStickSpeed;
+                verticalVelocity = -groundStickSpeed;
 
             if (grounded && Input.GetButtonDown("Jump"))
                 verticalVelocity = Mathf.Sqrt(2f * gravity * jumpHeight);

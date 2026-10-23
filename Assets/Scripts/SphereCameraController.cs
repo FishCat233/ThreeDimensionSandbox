@@ -2,10 +2,7 @@ using UnityEngine;
 
 namespace TDS.Camera
 {
-    /// <summary>
-    /// 球面轨道相机：只负责镜头的位置与朝向，不读取任何输入；旋转和缩放由外部脚本调用。
-    /// 挂在摄像机物体上，不要再让其它逻辑驱动它的 Transform。
-    /// </summary>
+    /// <summary>球面轨道相机：每帧按焦点与距离摆放镜头的位置与朝向，旋转和缩放由外部通过 Rotate/Zoom 驱动。</summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(UnityEngine.Camera))]
     public class SphereCameraController : MonoBehaviour
@@ -43,7 +40,7 @@ namespace TDS.Camera
             set => focusOn = value;
         }
 
-        /// <summary>目标距离（不是平滑中的实际距离）。</summary>
+        /// <summary>目标距离。</summary>
         public float Distance
         {
             get => distance;
