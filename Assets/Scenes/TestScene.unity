@@ -881,7 +881,7 @@ MonoBehaviour:
   sprintSpeed: 8
   jumpHeight: 1.5
   gravity: 20
-  GroundStickSpeed: 4
+  groundStickSpeed: 4
 --- !u!143 &1737315301
 CharacterController:
   m_ObjectHideFlags: 0
