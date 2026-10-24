@@ -1,4 +1,4 @@
-using TDS.Camera;
+using TDS.Cameras;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -24,7 +24,7 @@ namespace TDS
         [SerializeField] bool relockOnClick = true;
 
         [Header("相机")]
-        [Tooltip("留空则自动查找场景中的 SphereCameraController")]
+        [Tooltip("提供移动参考朝向与旋转缩放的球面相机")]
         [SerializeField] SphereCameraController sphereCamera;
         [Tooltip("按住哪个键才旋转；选 Always 则鼠标移动即旋转")]
         [SerializeField] RotateButton rotateButton = RotateButton.Always;
@@ -32,7 +32,7 @@ namespace TDS
         [SerializeField, Min(0f)] float sensitivity = 3f;
         [Tooltip("勾选后鼠标右移改为向左环绕")]
         [SerializeField] bool invertX;
-        [Tooltip("勾选后鼠标上移改为镜头下移")]
+        [Tooltip("勾选后鼠标上移改为压低视线，镜头随之升高")]
         [SerializeField] bool invertY;
         [SerializeField] bool zoomByScroll = true;
         [Tooltip("滚轮缩放的灵敏度，每格滚动按指数缩放距离")]
@@ -66,7 +66,7 @@ namespace TDS
             controller = GetComponent<CharacterController>();
 
             if (sphereCamera == null)
-                sphereCamera = FindFirstObjectByType<SphereCameraController>();
+                Debug.LogError("Couldn't find sphereCamera by explicit binding. For avoid this error, please bind sphereCamera explicit.");
         }
 
         void Start()
@@ -132,14 +132,11 @@ namespace TDS
             Vector3 right = transform.right;
 
             // 以相机的水平朝向作为移动参考：镜头转到哪里，WASD 就朝哪里。
-            if (sphereCamera != null)
+            Vector3 cameraForward = Vector3.ProjectOnPlane(sphereCamera.transform.forward, Vector3.up);
+            if (cameraForward.sqrMagnitude > 0.0001f)
             {
-                Vector3 cameraForward = Vector3.ProjectOnPlane(sphereCamera.transform.forward, Vector3.up);
-                if (cameraForward.sqrMagnitude > 0.0001f)
-                {
-                    forward = cameraForward.normalized;
-                    right = Vector3.Cross(Vector3.up, forward);
-                }
+                forward = cameraForward.normalized;
+                right = Vector3.Cross(Vector3.up, forward);
             }
 
             return right * input.x + forward * input.y;
@@ -152,14 +149,12 @@ namespace TDS
 
         void HandleCameraInput()
         {
-            if (sphereCamera == null) return;
-
             if (IsRotateButtonHeld())
             {
                 float invertXFactor = invertX ? -1f : 1f;
                 float invertYFactor = invertY ? -1f : 1f;
                 float yawDelta = Input.GetAxis("Mouse X") * sensitivity * invertXFactor;
-                float pitchDelta = Input.GetAxis("Mouse Y") * sensitivity * invertYFactor;
+                float pitchDelta = -Input.GetAxis("Mouse Y") * sensitivity * invertYFactor;
 
                 if (yawDelta != 0f || pitchDelta != 0f)
                     sphereCamera.Rotate(yawDelta, pitchDelta);

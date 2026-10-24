@@ -1,10 +1,10 @@
 using UnityEngine;
 
-namespace TDS.Camera
+namespace TDS.Cameras
 {
     /// <summary>球面轨道相机：每帧按焦点与距离摆放镜头的位置与朝向，旋转和缩放由外部通过 Rotate/Zoom 驱动。</summary>
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(UnityEngine.Camera))]
+    [RequireComponent(typeof(Camera))]
     public class SphereCameraController : MonoBehaviour
     {
         [Header("焦点")]
@@ -30,15 +30,11 @@ namespace TDS.Camera
         float yaw;
         float pitch;
         float currentDistance;
+        Vector3 anchor;
         Vector3 pivot;
-        bool initialized;
 
-        /// <summary>当前环绕的焦点物体，运行时可替换，默认平滑过渡。</summary>
-        public Transform FocusOn
-        {
-            get => focusOn;
-            set => focusOn = value;
-        }
+        /// <summary>当前环绕的焦点物体。运行时替换请用 SetFocus。</summary>
+        public Transform FocusOn => focusOn;
 
         /// <summary>目标距离。</summary>
         public float Distance
@@ -55,20 +51,13 @@ namespace TDS.Camera
 
         void OnEnable()
         {
-            initialized = false;
-        }
-
-        void Start()
-        {
             Initialize();
         }
 
         void LateUpdate()
         {
-            if (!initialized) Initialize();
-
             float t = DampingFactor(Time.unscaledDeltaTime);
-            pivot = Vector3.Lerp(pivot, SolvePivot(), t);
+            pivot = Vector3.Lerp(pivot, SolveTargetPivot(), t);
             currentDistance = Mathf.Lerp(currentDistance, distance, t);
 
             Quaternion rotation = Quaternion.Euler(pitch, yaw, 0f);
@@ -85,23 +74,21 @@ namespace TDS.Camera
                 pitchRange = new Vector2(pitchRange.y, pitchRange.x);
         }
 
-        /// <summary>设置焦点；snap 为 true 时立即吸附，不做平滑过渡。</summary>
+        /// <summary>切换环绕焦点；snap 为 true 时同帧吸附，不做平滑过渡。</summary>
         public void SetFocus(Transform target, bool snap = false)
         {
             focusOn = target;
-            if (snap && initialized) pivot = SolvePivot();
+            if (snap) SnapToFocus();
         }
 
-        /// <summary>立即吸附到当前焦点的目标位置。</summary>
+        /// <summary>立即吸附到当前焦点的目标位置与目标距离。</summary>
         public void SnapToFocus()
         {
-            if (!initialized) return;
-
-            pivot = SolvePivot();
+            pivot = SolveTargetPivot();
             currentDistance = distance;
         }
 
-        /// <summary>在当前朝向基础上追加旋转角度（度），俯仰角会被限制。</summary>
+        /// <summary>在当前朝向基础上追加旋转角度（度）：yawDelta 绕世界 Y 轴，pitchDelta 为正表示镜头向下看；俯仰角会被 pitchRange 限制。</summary>
         public void Rotate(float yawDelta, float pitchDelta)
         {
             yaw += yawDelta;
@@ -124,16 +111,14 @@ namespace TDS.Camera
 
             distance = ClampDistance(distance);
             currentDistance = distance;
-            // 没有焦点时，把初始视线上的点当作支点，镜头仍可原地旋转、缩放。
-            pivot = focusOn != null
-                ? SolvePivot()
-                : transform.position + forward * distance;
-            initialized = true;
+            // 无焦点时把初始视线上距离为 distance 的点当作注视点，镜头仍可原地旋转、缩放。
+            anchor = transform.position + forward * distance;
+            pivot = SolveTargetPivot();
         }
 
-        Vector3 SolvePivot()
+        Vector3 SolveTargetPivot()
         {
-            return focusOn != null ? focusOn.TransformPoint(focusOffset) : pivot;
+            return focusOn != null ? focusOn.TransformPoint(focusOffset) : anchor;
         }
 
         float ClampDistance(float value)
