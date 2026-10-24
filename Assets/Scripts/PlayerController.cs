@@ -5,6 +5,7 @@ using UnityEngine.Serialization;
 namespace TDS
 {
     [RequireComponent(typeof(CharacterController))]
+    [RequireComponent(typeof(Animator))]
     public class PlayerController : MonoBehaviour
     {
         /// <summary>允许触发相机旋转的鼠标按键。</summary>
@@ -43,6 +44,8 @@ namespace TDS
         [SerializeField, Min(0f)] float walkSpeed = 5f;
         [Tooltip("按住 Shift 时的移动速度（米/秒）")]
         [SerializeField, Min(0f)] float sprintSpeed = 8f;
+        [Tooltip("每秒最多转过的角度，越大转身越快")]
+        [SerializeField, Min(0f)] float turnSpeed = 720f;
 
         [Header("跳跃")]
         [Tooltip("跳跃能到达的最大高度（米）")]
@@ -55,8 +58,17 @@ namespace TDS
         [FormerlySerializedAs("GroundStickSpeed")]
         [SerializeField, Min(0.01f)] float groundStickSpeed = 2f;
 
+        [Header("动画")]
+        [Tooltip("moveAmount 动画参数趋近目标值的平滑时间（秒），越小切换越快")]
+        [SerializeField, Min(0.01f)] float moveSmoothTime = 0.1f;
+
         CharacterController controller;
+        Animator animator;
         float verticalVelocity;
+        float moveAmount;
+        float moveAmountVelocity;
+
+        static readonly int MoveAmountHash = Animator.StringToHash("moveAmount");
 
 
         public bool IsMouseLocked => Cursor.lockState == CursorLockMode.Locked;
@@ -64,9 +76,13 @@ namespace TDS
         void Awake()
         {
             controller = GetComponent<CharacterController>();
+            animator = GetComponent<Animator>();
 
             if (sphereCamera == null)
-                Debug.LogError("Couldn't find sphereCamera by explicit binding. For avoid this error, please bind sphereCamera explicit.");
+                Debug.LogError("Couldn't find sphereCamera by explicit binding. To avoid this error, please bind sphereCamera explicitly.");
+
+            if (animator == null)
+                Debug.LogError("Couldn't find Animator on the player. To avoid this error, please bind Animator explicitly.");
         }
 
         void Start()
@@ -122,8 +138,13 @@ namespace TDS
             Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
             if (input.sqrMagnitude > 1f) input.Normalize();
 
-            Vector3 move = SolveMoveDirection(input) * (IsSprinting() ? sprintSpeed : walkSpeed);
+            bool sprinting = IsSprinting();
+            Vector3 moveDirection = SolveMoveDirection(input);
+            Vector3 move = moveDirection * (sprinting ? sprintSpeed : walkSpeed);
             controller.Move((move + Vector3.up * verticalVelocity) * Time.deltaTime);
+            FaceMoveDirection(moveDirection);
+
+            UpdateMoveAnimation(input.magnitude, sprinting);
         }
 
         Vector3 SolveMoveDirection(Vector2 input)
@@ -142,9 +163,29 @@ namespace TDS
             return right * input.x + forward * input.y;
         }
 
+        void FaceMoveDirection(Vector3 direction)
+        {
+            direction.y = 0f;
+            if (direction.sqrMagnitude < 0.0001f) return;
+
+            Quaternion target = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, target, turnSpeed * Time.deltaTime);
+        }
+
         bool IsSprinting()
         {
             return Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        }
+
+        void UpdateMoveAnimation(float inputMagnitude, bool sprinting)
+        {
+            if (animator == null) return;
+
+            float speed = inputMagnitude * (sprinting ? sprintSpeed : walkSpeed);
+            float target = Mathf.Clamp01(speed / sprintSpeed);
+
+            moveAmount = Mathf.SmoothDamp(moveAmount, target, ref moveAmountVelocity, moveSmoothTime);
+            animator.SetFloat(MoveAmountHash, moveAmount);
         }
 
         void HandleCameraInput()
