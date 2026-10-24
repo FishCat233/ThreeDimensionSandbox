@@ -5,6 +5,7 @@ using UnityEngine.Serialization;
 namespace TDS
 {
     [RequireComponent(typeof(CharacterController))]
+    [RequireComponent(typeof(MeleeFighter))]
     [RequireComponent(typeof(Animator))]
     public class PlayerController : MonoBehaviour
     {
@@ -64,6 +65,7 @@ namespace TDS
 
         CharacterController controller;
         Animator animator;
+        MeleeFighter meleeFighter;
         float verticalVelocity;
         float moveAmount;
         float moveAmountVelocity;
@@ -77,12 +79,10 @@ namespace TDS
         {
             controller = GetComponent<CharacterController>();
             animator = GetComponent<Animator>();
+            meleeFighter = GetComponent<MeleeFighter>();
 
             if (sphereCamera == null)
                 Debug.LogError("Couldn't find sphereCamera by explicit binding. To avoid this error, please bind sphereCamera explicitly.");
-
-            if (animator == null)
-                Debug.LogError("Couldn't find Animator on the player. To avoid this error, please bind Animator explicitly.");
         }
 
         void Start()
@@ -107,6 +107,7 @@ namespace TDS
 
             if (IsMouseLocked) HandleCameraInput();
             HandleMoveInput();
+            HandleAttackInput();
         }
 
         /// <summary>锁定并隐藏光标，相机开始接收输入。</summary>
@@ -126,17 +127,22 @@ namespace TDS
         void HandleMoveInput()
         {
             bool grounded = controller.isGrounded;
+            bool canMove = !meleeFighter.IsAttacking;
 
             if (grounded && verticalVelocity < 0f)
                 verticalVelocity = -groundStickSpeed;
 
-            if (grounded && Input.GetButtonDown("Jump"))
+            if (canMove && grounded && Input.GetButtonDown("Jump"))
                 verticalVelocity = Mathf.Sqrt(2f * gravity * jumpHeight);
 
             verticalVelocity -= gravity * Time.deltaTime;
 
-            Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-            if (input.sqrMagnitude > 1f) input.Normalize();
+            Vector2 input = Vector2.zero;
+            if (canMove)
+            {
+                input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+                if (input.sqrMagnitude > 1f) input.Normalize();
+            }
 
             bool sprinting = IsSprinting();
             Vector3 moveDirection = SolveMoveDirection(input);
@@ -186,6 +192,12 @@ namespace TDS
 
             moveAmount = Mathf.SmoothDamp(moveAmount, target, ref moveAmountVelocity, moveSmoothTime);
             animator.SetFloat(MoveAmountHash, moveAmount);
+        }
+
+        void HandleAttackInput()
+        {
+            if (!IsMouseLocked) return;
+            if (Input.GetButtonDown("Fire1")) meleeFighter.Attack();
         }
 
         void HandleCameraInput()
