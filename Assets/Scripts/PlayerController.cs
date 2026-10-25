@@ -127,7 +127,7 @@ namespace TDS
         void HandleMoveInput()
         {
             bool grounded = controller.isGrounded;
-            bool canMove = !meleeFighter.IsAttacking;
+            bool canMove = !meleeFighter.IsAttacking && !meleeFighter.IsHurt;
 
             if (grounded && verticalVelocity < 0f)
                 verticalVelocity = -groundStickSpeed;
