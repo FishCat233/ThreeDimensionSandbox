@@ -401,10 +401,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efc8a9918d9fbc24aa82e1d5be446555, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attackStateName: Slash
+  attack: {fileID: 11400000, guid: a2463bb031bf4103b0c0fee9dd3ca4a6, type: 2}
   hurtStateName: Sword Impact
+  hurtFadeDuration: 0.05
   overrideLayerIndex: 1
-  fadeDuration: 0.05
   hitbox: {fileID: 0}
 --- !u!136 &315234723
 CapsuleCollider:
@@ -1243,10 +1243,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efc8a9918d9fbc24aa82e1d5be446555, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attackStateName: Slash
+  attack: {fileID: 11400000, guid: a2463bb031bf4103b0c0fee9dd3ca4a6, type: 2}
   hurtStateName: Sword Impact
+  hurtFadeDuration: 0.05
   overrideLayerIndex: 1
-  fadeDuration: 0.05
   hitbox: {fileID: 1516551845}
 --- !u!1 &1762344514
 GameObject:

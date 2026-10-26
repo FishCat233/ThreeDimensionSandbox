@@ -8,12 +8,14 @@ namespace TDS
     public class MeleeFighter : MonoBehaviour
     {
         [Header("动画")]
-        [SerializeField] string attackStateName = "Slash";
+        [SerializeField] AttackSO attack;
         [SerializeField] string hurtStateName = "Sword Impact";
+        [FormerlySerializedAs("fadeDuration")]
+        [Tooltip("进入受击状态的淡入时长（秒）")]
+        [SerializeField, Min(0f)] float hurtFadeDuration = 0.05f;
         [Tooltip("Slash 和 Sword Impact 都在 Override Layer 上")]
         [FormerlySerializedAs("attackLayerIndex")]
         [SerializeField, Min(0)] int overrideLayerIndex = 1;
-        [SerializeField, Min(0f)] float fadeDuration = 0.05f;
 
         [Header("判定")]
         [Tooltip("武器上的命中盒，留空则只播攻击动画")]
@@ -29,11 +31,14 @@ namespace TDS
         public event Action HurtEnded;
 
         Animator animator;
-        bool attackStateEntered;
+        bool hitboxOpen;
 
         void Awake()
         {
             animator = GetComponent<Animator>();
+
+            if (attack == null)
+                Debug.LogError("Couldn't find attack by explicit binding. For avoid this error, please bind attack explicitly.");
         }
 
         void OnEnable()
@@ -55,16 +60,18 @@ namespace TDS
 
         void UpdateHitboxWindow()
         {
-            if (hitbox == null || !hitbox.IsActive) return;
+            if (hitbox == null) return;
 
-            if (IsStateCurrentOrNext(attackStateName))
-            {
-                attackStateEntered = true;
-                return;
-            }
+            bool shouldOpen = attack != null
+                && TryGetAttackNormalizedTime(out float normalizedTime)
+                && attack.IsHitboxOpen(normalizedTime);
 
-            // 同一帧里 Attack() 刚把命中盒打开，动画还没切过去，等它真正进入攻击状态再收。
-            if (attackStateEntered) hitbox.Deactivate();
+            if (shouldOpen == hitboxOpen) return;
+
+            if (shouldOpen) hitbox.Activate();
+            else hitbox.Deactivate();
+
+            hitboxOpen = shouldOpen;
         }
 
         void OnHitboxHitLanded(Hurtbox hurtbox, Vector3 point)
@@ -80,10 +87,11 @@ namespace TDS
         {
             get
             {
-                if (animator.GetCurrentAnimatorStateInfo(overrideLayerIndex).IsName(attackStateName)) return true;
+                if (attack == null) return false;
+                if (animator.GetCurrentAnimatorStateInfo(overrideLayerIndex).IsName(attack.StateName)) return true;
 
                 return animator.IsInTransition(overrideLayerIndex)
-                    && animator.GetNextAnimatorStateInfo(overrideLayerIndex).IsName(attackStateName);
+                    && animator.GetNextAnimatorStateInfo(overrideLayerIndex).IsName(attack.StateName);
             }
         }
 
@@ -91,14 +99,17 @@ namespace TDS
 
         public void Attack()
         {
+            if (attack == null)
+            {
+                Debug.LogError("Couldn't find attack by explicit binding. For avoid this error, please bind attack explicitly.");
+                return;
+            }
+
             if (!ValidateLayer()) return;
             if (IsHurt) return;
             if (IsAttacking) return;
 
-            animator.CrossFadeInFixedTime(attackStateName, fadeDuration, overrideLayerIndex);
-
-            attackStateEntered = false;
-            hitbox?.Activate();
+            animator.CrossFadeInFixedTime(attack.StateName, attack.FadeDuration, overrideLayerIndex);
         }
 
         /// <summary>播放受击动画。受击期间的重复调用会被忽略。</summary>
@@ -108,7 +119,7 @@ namespace TDS
             if (IsHurt) return;
 
             IsHurt = true;
-            animator.CrossFadeInFixedTime(hurtStateName, fadeDuration, overrideLayerIndex);
+            animator.CrossFadeInFixedTime(hurtStateName, hurtFadeDuration, overrideLayerIndex);
             HurtStarted?.Invoke();
         }
 
@@ -116,6 +127,27 @@ namespace TDS
         {
             IsHurt = false;
             HurtEnded?.Invoke();
+        }
+
+        bool TryGetAttackNormalizedTime(out float normalizedTime)
+        {
+            AnimatorStateInfo activeState = animator.IsInTransition(overrideLayerIndex)
+                ? animator.GetNextAnimatorStateInfo(overrideLayerIndex)
+                : animator.GetCurrentAnimatorStateInfo(overrideLayerIndex);
+
+            if (!activeState.IsName(attack.StateName))
+            {
+                normalizedTime = 0f;
+                return false;
+            }
+
+            normalizedTime = StateNormalizedTime(activeState);
+            return true;
+        }
+
+        static float StateNormalizedTime(AnimatorStateInfo state)
+        {
+            return state.loop ? Mathf.Repeat(state.normalizedTime, 1f) : Mathf.Clamp01(state.normalizedTime);
         }
 
         /// <summary>stateName 是否为当前状态或下一个状态。</summary>
