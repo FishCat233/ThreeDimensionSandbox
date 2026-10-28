@@ -1,4 +1,5 @@
 using TDS.Cameras;
+using TDS.Debugging;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -93,6 +94,9 @@ namespace TDS
 
         void Update()
         {
+            // 控制台打开时把输入整体让给 UI。
+            if (GameplayInputGate.Blocked) return;
+
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 UnlockMouse();
@@ -126,6 +130,9 @@ namespace TDS
 
         void HandleMoveInput()
         {
+            // 移动与跳跃和相机、攻击一样，只在光标锁定时接收输入。
+            if (!IsMouseLocked) return;
+
             bool grounded = controller.isGrounded;
             bool canMove = !meleeFighter.IsAttacking && !meleeFighter.IsHurt;
 
