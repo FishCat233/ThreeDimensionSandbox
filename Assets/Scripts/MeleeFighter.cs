@@ -38,7 +38,7 @@ namespace TDS
             animator = GetComponent<Animator>();
 
             if (attack == null)
-                Debug.LogError("Couldn't find attack by explicit binding. For avoid this error, please bind attack explicitly.");
+                Debug.LogError("Couldn't find attack by explicit binding. To avoid this error, please bind attack explicitly.");
         }
 
         void OnEnable()
@@ -101,7 +101,7 @@ namespace TDS
         {
             if (attack == null)
             {
-                Debug.LogError("Couldn't find attack by explicit binding. For avoid this error, please bind attack explicitly.");
+                Debug.LogError("Couldn't find attack by explicit binding. To avoid this error, please bind attack explicitly.");
                 return;
             }
 
@@ -163,7 +163,7 @@ namespace TDS
         {
             if (animator.layerCount > overrideLayerIndex) return true;
 
-            Debug.LogError($"Animator layer index {overrideLayerIndex} is out of range (layerCount = {animator.layerCount}). For avoid this error, please set overrideLayerIndex within the layer count.");
+            Debug.LogError($"Animator layer index {overrideLayerIndex} is out of range (layerCount = {animator.layerCount}). To avoid this error, please set overrideLayerIndex within the layer count.");
             return false;
         }
     }

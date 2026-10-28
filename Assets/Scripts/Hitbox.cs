@@ -28,15 +28,15 @@ namespace TDS
 
             if (hitCollider == null)
             {
-                Debug.LogError("Couldn't find Collider on the hitbox. For avoid this error, please add a collider to it.");
+                Debug.LogError("Couldn't find Collider on the hitbox. To avoid this error, please add a collider to it.");
                 return;
             }
 
             if (!hitCollider.isTrigger)
-                Debug.LogError("The hitbox collider is not a trigger. For avoid this error, please enable Is Trigger on it.");
+                Debug.LogError("The hitbox collider is not a trigger. To avoid this error, please enable Is Trigger on it.");
 
             if (!hitRigidbody.isKinematic)
-                Debug.LogError("The hitbox Rigidbody is not kinematic. For avoid this error, please enable Is Kinematic on it.");
+                Debug.LogError("The hitbox Rigidbody is not kinematic. To avoid this error, please enable Is Kinematic on it.");
 
             hitCollider.enabled = false;
         }
