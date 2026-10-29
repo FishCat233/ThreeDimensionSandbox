@@ -94,8 +94,8 @@ ModelImporter:
       name: jumpEnd
       takeName: mixamo.com
       internalID: 9111558908952476143
-      firstFrame: 27
-      lastFrame: 57
+      firstFrame: 33
+      lastFrame: 53
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
