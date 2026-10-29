@@ -70,8 +70,11 @@ namespace TDS
         float verticalVelocity;
         float moveAmount;
         float moveAmountVelocity;
+        bool jumping;
 
         static readonly int MoveAmountHash = Animator.StringToHash("moveAmount");
+        static readonly int JumpStrengthHash = Animator.StringToHash("jumpStrength");
+        static readonly int IsGroundedHash = Animator.StringToHash("isGrounded");
 
 
         public bool IsMouseLocked => Cursor.lockState == CursorLockMode.Locked;
@@ -139,8 +142,14 @@ namespace TDS
             if (grounded && verticalVelocity < 0f)
                 verticalVelocity = -groundStickSpeed;
 
+            // 落地即放掉跳跃锁存。jumpStrength 继续停在 1 的话，AnyState 会把 jumpEnd 抢回 jumpBegin。
+            if (grounded) jumping = false;
+
             if (canMove && grounded && Input.GetButtonDown("Jump"))
+            {
                 verticalVelocity = Mathf.Sqrt(2f * gravity * jumpHeight);
+                jumping = true;
+            }
 
             verticalVelocity -= gravity * Time.deltaTime;
 
@@ -158,6 +167,7 @@ namespace TDS
             FaceMoveDirection(moveDirection);
 
             UpdateMoveAnimation(input.magnitude, sprinting);
+            UpdateJumpAnimation(grounded);
         }
 
         Vector3 SolveMoveDirection(Vector2 input)
@@ -199,6 +209,15 @@ namespace TDS
 
             moveAmount = Mathf.SmoothDamp(moveAmount, target, ref moveAmountVelocity, moveSmoothTime);
             animator.SetFloat(MoveAmountHash, moveAmount);
+        }
+
+        // jumpStrength 得在整个腾空期保持在 0.01 以上，一旦掉下去，AnyState 会把 jumpBegin 直接切成 jumpLoop。
+        void UpdateJumpAnimation(bool grounded)
+        {
+            if (animator == null) return;
+
+            animator.SetBool(IsGroundedHash, grounded);
+            animator.SetFloat(JumpStrengthHash, jumping ? 1f : 0f);
         }
 
         void HandleAttackInput()
