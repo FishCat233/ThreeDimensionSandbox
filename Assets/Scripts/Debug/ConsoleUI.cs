@@ -143,16 +143,15 @@ namespace TDS.Debugging
 
             // IMGUI 把一次可打印按键拆成两个 KeyDown 事件：先一个 keyCode 有效（物理键）、character 为空，
             // 再一个 character 有效（打出的字符）、keyCode 是 None。开关只认 keyCode 那一个；
-            // 带 ` 的字符事件必须一起吃掉，否则打开控制台那一下会把 ` 漏进输入框。
             if (current.keyCode == KeyCode.BackQuote)
             {
-                SetOpen(!isOpen);
                 current.Use();
                 return true;
             }
 
             if (current.character == '`')
             {
+                SetOpen(!isOpen);
                 current.Use();
                 return true;
             }
