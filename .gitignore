@@ -112,3 +112,7 @@ Assets/Scripts/.vscode/
 *.otf
 .vscode/
 Assets/Fonts/*.asset
+
+# MMD4Mecanim plugin is distributed separately, see README.md Requirements
+/Assets/MMD4Mecanim/
+/Assets/MMD4Mecanim.meta
