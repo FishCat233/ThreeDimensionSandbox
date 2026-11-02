@@ -4175,12 +4175,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   focusOn: {fileID: 1737315299}
-  focusOffset: {x: 0, y: 1.87, z: 0}
-  distance: 3
-  minDistance: 0.5
+  focusOffset: {x: 0, y: 1.2, z: 0}
+  distance: 3.9624264
+  minDistance: 0.8
   maxDistance: 50
   pitchRange: {x: -80, y: 80}
-  followDamping: 12
+  followDamping: 24
 --- !u!114 &989322992
 MonoBehaviour:
   m_ObjectHideFlags: 0
